@@ -10,10 +10,20 @@
         android:id="@+id/button1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="openCam"
+        android:onClick="scanQR"
         android:text="@string/takeQR"
   	  	android:textColor="#ffffff"
     	android:background="@drawable/mybutton"
     	android:layout_marginBottom="5dp" />
+
+	<Button
+		android:id="@+id/button2"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:onClick="sendGetServer"
+		android:text="@string/sendGetServer"
+		android:textColor="#ffffff"
+		android:background="@drawable/mybutton"
+		android:layout_marginBottom="5dp" />
 
 </LinearLayout>

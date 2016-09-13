@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">AZ Hermandad</string>
     <string name="takeQR">Read QR</string>
+    <string name="sendGetServer">Send Get</string>
 </resources>

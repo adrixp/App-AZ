@@ -4,46 +4,68 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
+import android.net.Uri;
+import android.widget.Toast;
 
 public class Menu extends Activity{
+
+	static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_menu);
 	}
 	
-	/*public void openCam(View view) {
-		Intent mainIntent = new Intent(this,TakePhoto.class);
-        startActivity(mainIntent);
+	public void scanQR(View view) {
+		try {
+			Intent intent = new Intent(ACTION_SCAN);
+			intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+			startActivityForResult(intent, 0);
+		} catch (ActivityNotFoundException anfe) {
+			showDialog(Menu.this, "No Scanner Found", "Download a scanner code activity?", "Yes", "No").show();
+		}
 	}
 	
-	public void searchPhoto(View view) {
-		Intent i = new Intent(this, File_Manager.class);
-		startActivity(i);
-	}
-	
-	public void config(View view) {
-		Intent i = new Intent(this, Settings.class);
-		startActivity(i);
-	}
-	
-	public void howTo(View view) {
-		Intent i = new Intent(this, HowTo.class);
-		startActivity(i);
-	}
-	
-	public void about(View view) {
-		Intent i = new Intent(this, About.class);
-		startActivity(i);
-	}
-	
-	public void log(View view) {
-		Intent i = new Intent(this, GridActivityCamOpBeta.class);
-		startActivity(i);
+	public void sendGetServer(View view) {
+
 	}
 
-	public void gridActivity(View view) {
-		Intent i = new Intent(this, OptionGrid.class);
-		startActivity(i);
-	}*/
+	private static AlertDialog showDialog(final Activity act, CharSequence title, CharSequence message, CharSequence buttonYes, CharSequence buttonNo) {
+		AlertDialog.Builder downloadDialog = new AlertDialog.Builder(act);
+		downloadDialog.setTitle(title);
+		downloadDialog.setMessage(message);
+		downloadDialog.setPositiveButton(buttonYes, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialogInterface, int i) {
+				Uri uri = Uri.parse("market://search?q=pname:" + "com.google.zxing.client.android");
+				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+				try {
+					act.startActivity(intent);
+				} catch (ActivityNotFoundException anfe) {
+
+				}
+			}
+		});
+		downloadDialog.setNegativeButton(buttonNo, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialogInterface, int i) {
+			}
+		});
+		return downloadDialog.show();
+	}
+
+	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		if (requestCode == 0) {
+			if (resultCode == RESULT_OK) {
+				String contents = intent.getStringExtra("SCAN_RESULT");
+				String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
+
+				Toast toast = Toast.makeText(this, "Content:" + contents + " Format:" + format, Toast.LENGTH_LONG);
+				toast.show();
+			}
+		}
+	}
+
 }

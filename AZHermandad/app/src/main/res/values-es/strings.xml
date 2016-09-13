@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">AZ Hermandad</string>
     <string name="takeQR">Leer QR</string>
+    <string name="sendGetServer">Enviar Get</string>
 </resources>
