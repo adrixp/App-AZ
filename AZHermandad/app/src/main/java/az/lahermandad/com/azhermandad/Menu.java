@@ -10,6 +10,13 @@ import android.content.DialogInterface;
 import android.net.Uri;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 public class Menu extends Activity{
 
 	static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
@@ -31,8 +38,50 @@ public class Menu extends Activity{
 	}
 	
 	public void sendGetServer(View view) {
+		// Instantiate the RequestQueue.
+		RequestQueue queue = Volley.newRequestQueue(this);
+		String url ="http://www.google.com";
 
+		// Request a string response from the provided URL.
+		StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+				new Response.Listener<String>() {
+					@Override
+					public void onResponse(String response) {
+						// Display the first 500 characters of the response string.
+                        Toast.makeText(getBaseContext(), "GET: Response is: "+ response.substring(0,500), Toast.LENGTH_LONG).show();
+					}
+				}, new Response.ErrorListener() {
+			@Override
+			public void onErrorResponse(VolleyError error) {
+                Toast.makeText(getBaseContext(), "GET: That didn't work!", Toast.LENGTH_LONG).show();
+			}
+		});
+		// Add the request to the RequestQueue.
+		queue.add(stringRequest);
 	}
+
+    public void sendPostServer(View view) {
+        // Instantiate the RequestQueue.
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url ="http://www.google.com";
+
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        // Display the first 500 characters of the response string.
+                        Toast.makeText(getBaseContext(), "POST: Response is: "+ response.substring(0,500), Toast.LENGTH_LONG).show();
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(getBaseContext(), "POST: That didn't work!", Toast.LENGTH_LONG).show();
+            }
+        });
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
+    }
 
 	private static AlertDialog showDialog(final Activity act, CharSequence title, CharSequence message, CharSequence buttonYes, CharSequence buttonNo) {
 		AlertDialog.Builder downloadDialog = new AlertDialog.Builder(act);
