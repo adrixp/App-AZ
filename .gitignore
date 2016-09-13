@@ -18,3 +18,12 @@ AZHermandad/app/build.gradle
 AZHermandad/app/proguard-rules.pro
 AZHermandad/gradle/wrapper/gradle-wrapper.jar
 AZHermandad/gradle/wrapper/gradle-wrapper.properties
+.idea/.name
+.idea/modules.xml
+.idea/copyright/profiles_settings.xml
+.idea/encodings.xml
+.idea/compiler.xml
+.idea/App-AZ.iml
+.idea/vcs.xml
+.idea/misc.xml
+.idea/workspace.xml
