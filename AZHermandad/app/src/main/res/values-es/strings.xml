@@ -4,4 +4,11 @@
     <string name="takeQR">Leer QR</string>
     <string name="sendGetServer">Enviar Get</string>
     <string name="sendPostServer">Enviar Post</string>
+
+    <string name="logAuth">Autenticando...</string>
+    <string name="logUsernotExist">el usuario no existe</string>
+    <string name="logFailDue">Login fallo debido a</string>
+    <string name="logPutValidEm">introduce un email válido</string>
+    <string name="logInvEm">email inválido</string>
+    <string name="logNoPass">contraseña vacía</string>
 </resources>

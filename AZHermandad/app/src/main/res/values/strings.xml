@@ -3,4 +3,12 @@
     <string name="takeQR">Read QR</string>
     <string name="sendGetServer">Send Get</string>
     <string name="sendPostServer">Send Post</string>
+
+    <string name="logAuth">Authenticating...</string>
+    <string name="logUsernotExist">user do not exist</string>
+    <string name="logFailDue">Login failed due to</string>
+    <string name="logPutValidEm">enter a valid email address</string>
+    <string name="logInvEm">Invalid email</string>
+    <string name="logNoPass">Empty password</string>
+
 </resources>

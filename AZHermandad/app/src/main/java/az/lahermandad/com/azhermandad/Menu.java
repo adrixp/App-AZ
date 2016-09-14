@@ -8,6 +8,7 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.net.Uri;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -60,6 +61,18 @@ public class Menu extends Activity{
 		queue.add(stringRequest);
 	}
 
+	/*
+
+	    get a api/venta todo el rato y me devuelve el json
+
+	    post body json cabecera auth en todas
+
+        id numero_dorsal nombre mail inmortal
+
+        pantalla: Ok entrada no existe o entrada repetida
+
+	 */
+
     public void sendPostServer(View view) {
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -110,7 +123,8 @@ public class Menu extends Activity{
 			if (resultCode == RESULT_OK) {
 				String contents = intent.getStringExtra("SCAN_RESULT");
 				String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
-
+                final TextView mTextView = (TextView) findViewById(R.id.textView);
+                mTextView.setText(contents);
 				Toast toast = Toast.makeText(this, "Content:" + contents + " Format:" + format, Toast.LENGTH_LONG);
 				toast.show();
 			}

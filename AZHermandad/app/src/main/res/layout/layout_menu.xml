@@ -36,4 +36,11 @@
 		android:background="@drawable/mybutton"
 		android:layout_marginBottom="5dp" />
 
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="New Text"
+		android:id="@+id/textView"
+		android:layout_gravity="center_horizontal" />
+
 </LinearLayout>
