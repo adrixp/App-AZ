@@ -10,5 +10,6 @@
     <string name="logPutValidEm">enter a valid email address</string>
     <string name="logInvEm">Invalid email</string>
     <string name="logNoPass">Empty password</string>
+    <string name="rememberme">Remember me?</string>
 
 </resources>

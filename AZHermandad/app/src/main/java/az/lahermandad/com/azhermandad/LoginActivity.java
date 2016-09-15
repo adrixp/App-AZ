@@ -2,6 +2,7 @@ package az.lahermandad.com.azhermandad;
 
 import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.ArrayMap;
 import android.util.Base64;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -21,6 +23,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,16 +41,55 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static String Error = "";
     private static final int REQUEST_SIGNUP = 0;
+    private static boolean leido = false;
 
     @Bind(R.id.input_email) EditText _emailText;
     @Bind(R.id.input_password) EditText _passwordText;
     @Bind(R.id.btn_login) Button _loginButton;
+    @Bind(R.id.checkBox)  CheckBox _checkBoxn;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+
+        File folder = new File(Environment.getExternalStorageDirectory()	+ "/AZ_LaHermandad" );
+        if(!folder.isDirectory()){
+            if(folder.mkdir()){
+                Log.i(TAG, "Folder created successfully");
+            }else{
+                Log.i(TAG, "Folder couldn't be created");
+            }
+        }
+
+        String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
+        File file = new File(path, "tmp");
+        //Read text from file
+        String line = "empty";
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            line = br.readLine();
+            br.close();
+        }
+        catch (IOException e) {
+            //You'll need to add proper error handling here
+            line = "empty";
+        }
+
+        System.out.println("linea: " + line);
+
+        if(line != null ){
+            if(!line.equals("empty")) {
+                byte[] data = Base64.decode(line, Base64.DEFAULT);
+                String text = new String(data);
+                String[] parts = text.split(":");
+
+                _emailText.setText(parts[0]);
+                _passwordText.setText(parts[1]);
+            }
+        }
 
         _loginButton.setOnClickListener(new View.OnClickListener() {
 
@@ -106,13 +152,42 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage(getString(R.string.logAuth));
         progressDialog.show();
 
+
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://test.selltickets.lahermandad.es/api/user";
-
+        String url ="http://test.tickets.lahermandad.es/api/user";
         String strTo64 = email + ":" + pass;
         byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
         final String valHeader = "Basic " + new String(b64);
+
+        ///////////////////////////////// LOgin Remember///////////////////////
+
+        if(_checkBoxn.isChecked()){
+            try {
+                String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
+                File settings = new File(path, "tmp");
+                FileOutputStream fos2 = new FileOutputStream(settings);
+
+                fos2.write(new String(b64).getBytes());
+                fos2.close();
+
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "Exception in photoCallback", e);
+            }
+        }else if(!_checkBoxn.isChecked()){
+            try {
+                String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
+                File settings = new File(path, "tmp");
+                FileOutputStream fos2 = new FileOutputStream(settings);
+                fos2.write("empty".getBytes());
+                fos2.close();
+
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "Exception in photoCallback", e);
+            }
+        }
+        ///////////////////////////////// End LOgin Remember///////////////////////
+
 
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -137,7 +212,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
 
-                System.out.print("Error: " + error.getMessage());
+                System.out.print("Error: " + error.networkResponse.statusCode);
                 Error = getString(R.string.logUsernotExist);
                 new android.os.Handler().postDelayed(
                         new Runnable() {
@@ -152,13 +227,12 @@ public class LoginActivity extends AppCompatActivity {
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> mHeaders = new ArrayMap<String, String>();
                 mHeaders.put("Authorization", valHeader);
+                mHeaders.put("Content-Type", "text/plain; charset=utf-8");
                 return mHeaders;
             }
         };
         // Add the request to the RequestQueue.
         queue.add(stringRequest);
-
-
     }
 
     public void onLoginFailed() {

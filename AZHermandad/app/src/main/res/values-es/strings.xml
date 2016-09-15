@@ -11,4 +11,5 @@
     <string name="logPutValidEm">introduce un email válido</string>
     <string name="logInvEm">email inválido</string>
     <string name="logNoPass">contraseña vacía</string>
+    <string name="rememberme">Recordar?</string>
 </resources>
