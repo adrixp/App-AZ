@@ -3,6 +3,7 @@ package az.lahermandad.com.azhermandad;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -22,60 +23,11 @@ public class Menu extends Activity{
 
 	static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-        setContentView(R.layout.layout_menu);
-	}
+    boolean canStartHandler = true;
+    private int mInterval = 500; // 0.5 seconds by default
+    private Handler mHandler;
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        System.out.println("onResume");
-    }
-
-    @Override
-    public void onPause() {
-        System.out.println("onPause");
-        super.onPause();
-    }
-	
-	public void scanQR(View view) {
-		try {
-			Intent intent = new Intent(ACTION_SCAN);
-			intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-			startActivityForResult(intent, 0);
-		} catch (ActivityNotFoundException anfe) {
-			showDialog(Menu.this, "No Scanner Found", "Download a scanner code activity?", "Yes", "No").show();
-		}
-	}
-	
-	public void sendGetServer(View view) {
-		// Instantiate the RequestQueue.
-		RequestQueue queue = Volley.newRequestQueue(this);
-		String url ="http://www.google.com";
-
-		// Request a string response from the provided URL.
-		StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-				new Response.Listener<String>() {
-					@Override
-					public void onResponse(String response) {
-						// Display the first 500 characters of the response string.
-                        Toast.makeText(getBaseContext(), "GET: Response is: "+ response.substring(0,500), Toast.LENGTH_LONG).show();
-					}
-				}, new Response.ErrorListener() {
-			@Override
-			public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getBaseContext(), "GET: That didn't work!", Toast.LENGTH_LONG).show();
-			}
-		});
-		// Add the request to the RequestQueue.
-		queue.add(stringRequest);
-	}
-
-	/*
-
+    /*
 	    get a api/venta todo el rato y me devuelve el json
 
 	    post body json cabecera auth en todas
@@ -86,9 +38,107 @@ public class Menu extends Activity{
 
 	 */
 
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+        setContentView(R.layout.layout_menu);
+	}
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if(canStartHandler){
+
+        }
+        System.out.println("onResume");
+        System.out.println(canStartHandler);
+    }
+
+    @Override
+    public void onPause() {
+        System.out.println("onPause");
+        //stopRepeatingTask();
+        super.onPause();
+    }
+
+    void startRepeatingTask() {
+        mStatusChecker.run();
+    }
+
+    void stopRepeatingTask() {
+        mHandler.removeCallbacks(mStatusChecker);
+    }
+
+    public void scanQR(View view) {
+		try {
+			Intent intent = new Intent(ACTION_SCAN);
+			intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+			startActivityForResult(intent, 0);
+		} catch (ActivityNotFoundException anfe) {
+			showDialog(Menu.this, "No Scanner Found", "Download a scanner code activity?", "Yes", "No").show();
+		}
+	}
+
+    Runnable mStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+
+            } finally {
+                mHandler.postDelayed(mStatusChecker, mInterval);
+            }
+        }
+    };
+
+	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+
+		System.out.println("onActivityResult");
+        System.out.println(canStartHandler);
+        canStartHandler = false;
+
+		if (requestCode == 0) {
+			if (resultCode == RESULT_OK) {
+				String contents = intent.getStringExtra("SCAN_RESULT");
+				String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
+                final TextView mTextView = (TextView) findViewById(R.id.textView);
+                mTextView.setText(contents);
+				Toast toast = Toast.makeText(this, "Content:" + contents + " Format:" + format, Toast.LENGTH_LONG);
+				toast.show();
+			}
+		}
+	}
+
+
+    private static AlertDialog showDialog(final Activity act, CharSequence title, CharSequence message, CharSequence buttonYes, CharSequence buttonNo) {
+        AlertDialog.Builder downloadDialog = new AlertDialog.Builder(act);
+        downloadDialog.setTitle(title);
+        downloadDialog.setMessage(message);
+        downloadDialog.setPositiveButton(buttonYes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Uri uri = Uri.parse("market://search?q=pname:" + "com.google.zxing.client.android");
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                try {
+                    act.startActivity(intent);
+                } catch (ActivityNotFoundException anfe) {
+
+                }
+            }
+        });
+        downloadDialog.setNegativeButton(buttonNo, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+            }
+        });
+        return downloadDialog.show();
+    }
+
+    public void sendGetServer(View view) {
+
+    }
+
     public void sendPostServer(View view) {
         // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
+        /*RequestQueue queue = Volley.newRequestQueue(this);
         String url ="http://www.google.com";
 
         // Request a string response from the provided URL.
@@ -106,44 +156,7 @@ public class Menu extends Activity{
             }
         });
         // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+        queue.add(stringRequest);*/
     }
-
-	private static AlertDialog showDialog(final Activity act, CharSequence title, CharSequence message, CharSequence buttonYes, CharSequence buttonNo) {
-		AlertDialog.Builder downloadDialog = new AlertDialog.Builder(act);
-		downloadDialog.setTitle(title);
-		downloadDialog.setMessage(message);
-		downloadDialog.setPositiveButton(buttonYes, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialogInterface, int i) {
-				Uri uri = Uri.parse("market://search?q=pname:" + "com.google.zxing.client.android");
-				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-				try {
-					act.startActivity(intent);
-				} catch (ActivityNotFoundException anfe) {
-
-				}
-			}
-		});
-		downloadDialog.setNegativeButton(buttonNo, new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialogInterface, int i) {
-			}
-		});
-		return downloadDialog.show();
-	}
-
-	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
-		System.out.println("onActivityResult");
-		if (requestCode == 0) {
-			if (resultCode == RESULT_OK) {
-				String contents = intent.getStringExtra("SCAN_RESULT");
-				String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
-                final TextView mTextView = (TextView) findViewById(R.id.textView);
-                mTextView.setText(contents);
-				Toast toast = Toast.makeText(this, "Content:" + contents + " Format:" + format, Toast.LENGTH_LONG);
-				toast.show();
-			}
-		}
-	}
 
 }

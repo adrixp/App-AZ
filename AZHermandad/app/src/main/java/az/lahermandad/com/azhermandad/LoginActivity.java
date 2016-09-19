@@ -152,8 +152,18 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage(getString(R.string.logAuth));
         progressDialog.show();
 
+        new android.os.Handler().postDelayed(
+                new Runnable() {
+                    public void run() {
+                        // On complete call either onLoginSuccess or onLoginFailed
+                        onLoginSuccess();
+                        //onLoginFailed();
+                        progressDialog.dismiss();
+                    }
+                }, 500);
 
-        // Instantiate the RequestQueue.
+
+        /*// Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
         String url ="http://test.tickets.lahermandad.es/api/user";
         String strTo64 = email + ":" + pass;
@@ -211,8 +221,12 @@ public class LoginActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
+                try{
+                    System.out.print("Error: " + error.networkResponse.statusCode);
+                }catch (Exception e){
+                    System.out.print("Error: " + error.getMessage());
+                }
 
-                System.out.print("Error: " + error.networkResponse.statusCode);
                 Error = getString(R.string.logUsernotExist);
                 new android.os.Handler().postDelayed(
                         new Runnable() {
@@ -232,7 +246,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
         // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+        queue.add(stringRequest);*/
     }
 
     public void onLoginFailed() {
