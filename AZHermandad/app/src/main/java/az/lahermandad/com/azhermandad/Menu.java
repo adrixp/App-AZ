@@ -27,6 +27,19 @@ public class Menu extends Activity{
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_menu);
 	}
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        System.out.println("onResume");
+    }
+
+    @Override
+    public void onPause() {
+        System.out.println("onPause");
+        super.onPause();
+    }
 	
 	public void scanQR(View view) {
 		try {
@@ -119,6 +132,8 @@ public class Menu extends Activity{
 	}
 
 	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+
+		System.out.println("onActivityResult");
 		if (requestCode == 0) {
 			if (resultCode == RESULT_OK) {
 				String contents = intent.getStringExtra("SCAN_RESULT");
