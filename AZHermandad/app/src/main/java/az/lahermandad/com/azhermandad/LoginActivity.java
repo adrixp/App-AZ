@@ -78,8 +78,6 @@ public class LoginActivity extends AppCompatActivity {
             line = "empty";
         }
 
-        System.out.println("linea: " + line);
-
         if(line != null ){
             if(!line.equals("empty")) {
                 byte[] data = Base64.decode(line, Base64.DEFAULT);
@@ -144,6 +142,7 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
+    //loPrimohtoLocoh
     public void makeRequest (String email, String pass){
 
         final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this,
@@ -152,23 +151,13 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage(getString(R.string.logAuth));
         progressDialog.show();
 
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
-                        //onLoginFailed();
-                        progressDialog.dismiss();
-                    }
-                }, 500);
-
-
-        /*// Instantiate the RequestQueue.
+        // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://test.tickets.lahermandad.es/api/user";
+        String url ="http://test.az.tickets.lahermandad.es/api/user";
         String strTo64 = email + ":" + pass;
         byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
         final String valHeader = "Basic " + new String(b64);
+        System.out.println("Header: makeRequest: Login: " + valHeader);
 
         ///////////////////////////////// LOgin Remember///////////////////////
 
@@ -182,7 +171,7 @@ public class LoginActivity extends AppCompatActivity {
                 fos2.close();
 
             } catch (java.io.IOException e) {
-                Log.e(TAG, "Exception in photoCallback", e);
+                Log.e(TAG, "Exception in writeFile", e);
             }
         }else if(!_checkBoxn.isChecked()){
             try {
@@ -246,7 +235,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         };
         // Add the request to the RequestQueue.
-        queue.add(stringRequest);*/
+        queue.add(stringRequest);
     }
 
     public void onLoginFailed() {
