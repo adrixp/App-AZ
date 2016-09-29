@@ -24,6 +24,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
@@ -31,6 +32,7 @@ import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -55,14 +57,7 @@ public class Menu extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_menu);
-        setupWindowAnimations();
 	}
-
-    private void setupWindowAnimations() {
-        Explode exp = new Explode();
-        exp.setDuration(1000);
-        getWindow().setExitTransition(exp);
-    }
 
 
     @Override
@@ -225,6 +220,7 @@ public class Menu extends AppCompatActivity {
                     String entradaMail = myMapEntrada.get("mail");
                     String entradaSc = myMapEntrada.get("securityCode");
                     String EntradaDelete = myMapEntrada.get("delete");
+                    String numeroEntrada = "-";
                     myMapEntrada.clear();
 
                     if (EntradaDelete.equals("true")) {
@@ -235,8 +231,8 @@ public class Menu extends AppCompatActivity {
                         listJson = listJson.substring(1, listJson.length() - 2); //sin los []
                         System.out.println("listJson Sin alante y sin atras" + listJson);
                         String partsJson[] = listJson.split("[}],");
-                        String strPost = "[";
                         Map<String, String> myMapLista;
+                        String jsonParted = "";
 
                         boolean proccesed = false;
 
@@ -248,30 +244,27 @@ public class Menu extends AppCompatActivity {
                                 myMapLista = gson.fromJson(partsJson[i], stringStringMap);
                             }
 
-                            String jsonParted = partsJson[i];
-
                             if (myMapLista.get("user").equals(entradaUser) && myMapLista.get("name").equals(entradaName) &&
                                     myMapLista.get("mail").equals(entradaMail) && myMapLista.get("securityCode").equals(entradaSc) &&
                                     myMapLista.get("use").equals("true")) {
                                 if(!proccesed){
                                     stateEntrada = 2;
                                     proccesed = true;
+                                    int number = i+1;
+                                    numeroEntrada = "" + number;
                                 }
                             } else if (myMapLista.get("user").equals(entradaUser) && myMapLista.get("name").equals(entradaName) &&
                                     myMapLista.get("mail").equals(entradaMail) && myMapLista.get("securityCode").equals(entradaSc) &&
                                     myMapLista.get("use").equals("false")) {
                                 if(!proccesed){
-                                    String laputa [] = jsonParted.split("\"use\":false");
-                                    jsonParted = laputa[0] + "\"use\":true" + laputa[1];
+                                    System.out.println("al partir : " + json);
+                                    String laputa [] = json.split("\"use\":false");
+                                    json = laputa[0] + "\"use\":true" + laputa[1];
+                                    int number = i+1;
+                                    numeroEntrada = "" + number;
                                     stateEntrada = 1;
                                     proccesed = true;
                                 }
-                            }
-
-                            if (i < partsJson.length - 1) {
-                                strPost = strPost + jsonParted + "},";
-                            } else {
-                                strPost = strPost + jsonParted;
                             }
 
                             myMapLista.clear();
@@ -281,15 +274,17 @@ public class Menu extends AppCompatActivity {
                             stateEntrada = 4;
                         }
 
-                        strPost = strPost + "]";
-                        System.out.println("QR: UpdateLista: " + strPost);
-                        sendPost(strPost);
+                        System.out.println("QR: UpdateLista: " + json);
+                        if(proccesed &&  stateEntrada == 1){
+                            sendPost(json);
+                        }
+
                     }
 
-                    showStateEntrada(entradaUser, entradaName, entradaMail, stateEntrada);
+                    showStateEntrada(entradaUser, entradaName, entradaMail, stateEntrada, numeroEntrada);
 
                 }catch (Exception e){
-                    showStateEntrada("", "", "", 3);
+                    showStateEntrada("", "", "", 3 , "-");
                     e.printStackTrace();
                 }
 			}
@@ -320,7 +315,7 @@ public class Menu extends AppCompatActivity {
     }
 
 
-    public void showStateEntrada (String entradaUser, String entradaName, String entradaMail, int stateEntrada){
+    public void showStateEntrada (String entradaUser, String entradaName, String entradaMail, int stateEntrada, String numEntrada){
         String entradaRestult;
         switch (stateEntrada){
             case 0:
@@ -342,9 +337,15 @@ public class Menu extends AppCompatActivity {
                 entradaRestult = "Error Desconocido";
                 break;
         }
-        final TextView mTextView = (TextView) findViewById(R.id.textView);
-        mTextView.setText("Vendedor: " + entradaUser + "\n Participante: " + entradaName
-                + "\n Mail: " + entradaMail + "\n Status: " +entradaRestult);
+        String body =  "*Vendedor:\n" + entradaUser + "\n*Participante:\n" + entradaName
+                + "\n*Mail:\n" + entradaMail + "\n*Número: " +numEntrada;
+
+        if(stateEntrada == 1){
+            showDialogResult(Menu.this, true , entradaRestult , body, "Ok").show();
+        }else{
+            showDialogResult(Menu.this, false ,entradaRestult, body, "Ok").show();
+        }
+
     }
     public void sendPost(String strPost) {
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -355,10 +356,10 @@ public class Menu extends AppCompatActivity {
         System.out.println("headers body: " + strPost);
 
         try {
-            JSONArray jsonArray = new JSONArray(strPost);
-            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url, jsonArray, new Response.Listener<JSONArray>() {
+            JSONObject jsonobj = new JSONObject(strPost);
+            JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(Request.Method.POST, url, jsonobj, new Response.Listener<JSONObject>() {
                 @Override
-                public void onResponse(JSONArray response) {
+                public void onResponse(JSONObject response) {
                     System.out.print("Response OK post: " + response);
                 }
             }, new Response.ErrorListener() {
@@ -379,6 +380,23 @@ public class Menu extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    private static AlertDialog showDialogResult(final Activity act, boolean isOk, CharSequence title, CharSequence message, CharSequence buttonYes) {
+        AlertDialog.Builder downloadDialog = new AlertDialog.Builder(act);
+        downloadDialog.setTitle(title);
+        downloadDialog.setMessage(message);
+        if(isOk){
+            downloadDialog.setIcon(R.mipmap.ic_gtick);
+        }else{
+            downloadDialog.setIcon(R.mipmap.ic_redcross);
+        }
+        downloadDialog.setPositiveButton(buttonYes, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+        return downloadDialog.show();
     }
 
 
