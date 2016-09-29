@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import butterknife.ButterKnife;
@@ -41,7 +40,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static String Error = "";
     private static final int REQUEST_SIGNUP = 0;
-    private static boolean leido = false;
+    private static String valHeader = "";
 
     @Bind(R.id.input_email) EditText _emailText;
     @Bind(R.id.input_password) EditText _passwordText;
@@ -138,6 +137,7 @@ public class LoginActivity extends AppCompatActivity {
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
         Intent mainIntent = new Intent(this,Menu.class);
+        mainIntent.putExtra("mmSeg",valHeader);
         startActivity(mainIntent);
         finish();
     }
@@ -153,10 +153,10 @@ public class LoginActivity extends AppCompatActivity {
 
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://test-az-tickets.herokuapp.com/api/user";
+        String url ="http://az.tickets.lahermandad.es/api/user";
         String strTo64 = email + ":" + pass;
         byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
-        final String valHeader = "Basic " + new String(b64);
+        valHeader = "Basic " + new String(b64);
         System.out.println("Header: makeRequest: Login: " + valHeader);
 
         ///////////////////////////////// LOgin Remember///////////////////////
@@ -205,7 +205,7 @@ public class LoginActivity extends AppCompatActivity {
                                         //onLoginFailed();
                                         progressDialog.dismiss();
                                     }
-                                }, 2000);
+                                }, 1000);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -223,7 +223,7 @@ public class LoginActivity extends AppCompatActivity {
                                 onLoginFailed();
                                 progressDialog.dismiss();
                             }
-                        }, 2000);
+                        }, 1000);
             }
         }){
             @Override

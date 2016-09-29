@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.transition.Explode;
-import android.transition.TransitionInflater;
 import android.util.ArrayMap;
 import android.util.Base64;
 import android.util.Log;
@@ -16,21 +14,18 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.net.Uri;
-import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,15 +43,21 @@ public class Menu extends AppCompatActivity {
     private static final String TAG = "Menu";
 
     boolean canStartHandler = true;
-    private int mInterval = 500; // 0.5 seconds by default
+    private int mInterval = 750; // 0.5 seconds by default
     private Handler mHandler;
-    String strTo64 = "empty";
+    //String strTo64 = "empty";
+    SharedPreferences sP = new SharedPreferences();
 
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_menu);
+
+        Bundle extras = getIntent().getExtras();
+        String mmSeg = extras.getString("mmSeg");
+        sP.setmmseg(mmSeg);
+
 	}
 
 
@@ -65,7 +66,7 @@ public class Menu extends AppCompatActivity {
         super.onResume();
 
         if(canStartHandler){
-            strTo64 = readLogin();
+            //strTo64 = readLogin();
             mHandler = new Handler();
             startRepeatingTask();
         }
@@ -132,7 +133,7 @@ public class Menu extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                if(!strTo64.equals("empty")){
+                if(sP.getmmseg().length() > 0){
                     makeRequest();
                 }
             } finally {
@@ -143,9 +144,10 @@ public class Menu extends AppCompatActivity {
 
     public void makeRequest(){
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://test-az-tickets.herokuapp.com/api/sell";
-        byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
-        final String valHeader = "Basic " + new String(b64);
+        String url ="http://az.tickets.lahermandad.es/api/sell";
+        //byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
+        //final String valHeader = "Basic " + new String(b64);
+        final String valHeader = sP.getmmseg();
 
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -155,7 +157,8 @@ public class Menu extends AppCompatActivity {
                         // Display the first 500 characters of the response string.
                         //Toast.makeText(getBaseContext(), "GET: Response is: "+ response.substring(0,500), Toast.LENGTH_LONG).show();
                         System.out.println("Response: MakeRequest: " + response);
-                        try {
+                        sP.setlistmmseg(response);
+                        /*try {
                             String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
                             File settings = new File(path, "tmp2");
                             FileOutputStream fos2 = new FileOutputStream(settings);
@@ -165,7 +168,7 @@ public class Menu extends AppCompatActivity {
 
                         } catch (java.io.IOException e) {
                             Log.e(TAG, "Exception in writeFile", e);
-                        }
+                        }*/
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -195,7 +198,7 @@ public class Menu extends AppCompatActivity {
         System.out.println("canStartHandler: " + canStartHandler);
         canStartHandler = false;
 
-        strTo64 = readLogin();
+        //strTo64 = readLogin();
         mHandler = new Handler();
         startRepeatingTask();
 
@@ -227,12 +230,12 @@ public class Menu extends AppCompatActivity {
                         stateEntrada = 0;
                     }else {
 
-                        String listJson = readFileRequest();
-                        listJson = listJson.substring(1, listJson.length() - 2); //sin los []
+                        //String listJson = readFileRequest();
+                        String listJson = sP.getlistmmseg();
+                        listJson = listJson.substring(1, listJson.length() - 1); //sin los []
                         System.out.println("listJson Sin alante y sin atras" + listJson);
                         String partsJson[] = listJson.split("[}],");
                         Map<String, String> myMapLista;
-                        String jsonParted = "";
 
                         boolean proccesed = false;
 
@@ -270,7 +273,7 @@ public class Menu extends AppCompatActivity {
                             myMapLista.clear();
 
                         }
-                        if(!proccesed){
+                        if(!proccesed && stateEntrada != 0){
                             stateEntrada = 4;
                         }
 
@@ -349,9 +352,10 @@ public class Menu extends AppCompatActivity {
     }
     public void sendPost(String strPost) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        final String url = "http://test-az-tickets.herokuapp.com/api/sell";
-        byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
-        final String valHeader = "Basic " + new String(b64);
+        final String url = "http://az.tickets.lahermandad.es/api/sell";
+        //byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
+        //final String valHeader = "Basic " + new String(b64);
+        final String valHeader = sP.getmmseg();
         System.out.println("headers post: " + valHeader);
         System.out.println("headers body: " + strPost);
 
