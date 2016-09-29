@@ -153,7 +153,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://test.az.tickets.lahermandad.es/api/user";
+        String url ="http://test-az-tickets.herokuapp.com/api/user";
         String strTo64 = email + ":" + pass;
         byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
         final String valHeader = "Basic " + new String(b64);

@@ -5,6 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
+import android.transition.Explode;
+import android.transition.TransitionInflater;
 import android.util.ArrayMap;
 import android.util.Base64;
 import android.util.Log;
@@ -14,18 +17,20 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.net.Uri;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,7 +40,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-public class Menu extends Activity{
+public class Menu extends AppCompatActivity {
 
 	static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
     private static final String TAG = "Menu";
@@ -45,31 +50,29 @@ public class Menu extends Activity{
     private Handler mHandler;
     String strTo64 = "empty";
 
-    /*
-	    get a api/venta todo el rato y me devuelve el json
-
-	    post body json cabecera auth en todas
-
-        id numero_dorsal nombre mail inmortal
-
-        pantalla: Ok entrada no existe o entrada repetida
-
-	 */
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_menu);
+        setupWindowAnimations();
 	}
+
+    private void setupWindowAnimations() {
+        Explode exp = new Explode();
+        exp.setDuration(1000);
+        getWindow().setExitTransition(exp);
+    }
+
 
     @Override
     public void onResume() {
         super.onResume();
 
         if(canStartHandler){
-            /*strTo64 = readLogin();
+            strTo64 = readLogin();
             mHandler = new Handler();
-            startRepeatingTask();*/
+            startRepeatingTask();
         }
         System.out.println("onResume");
     }
@@ -77,7 +80,9 @@ public class Menu extends Activity{
     @Override
     public void onPause() {
         System.out.println("onPause");
-        //stopRepeatingTask();
+        if(mHandler != null){
+            stopRepeatingTask();
+        }
         super.onPause();
     }
 
@@ -143,7 +148,7 @@ public class Menu extends Activity{
 
     public void makeRequest(){
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://test.az.tickets.lahermandad.es/api/sell";
+        String url ="http://test-az-tickets.herokuapp.com/api/sell";
         byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
         final String valHeader = "Basic " + new String(b64);
 
@@ -195,9 +200,9 @@ public class Menu extends Activity{
         System.out.println("canStartHandler: " + canStartHandler);
         canStartHandler = false;
 
-        /*strTo64 = readLogin();
+        strTo64 = readLogin();
         mHandler = new Handler();
-        startRepeatingTask();*/
+        startRepeatingTask();
 
 		if (requestCode == 0) {
 			if (resultCode == RESULT_OK) {
@@ -342,7 +347,38 @@ public class Menu extends Activity{
                 + "\n Mail: " + entradaMail + "\n Status: " +entradaRestult);
     }
     public void sendPost(String strPost) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        final String url = "http://test-az-tickets.herokuapp.com/api/sell";
+        byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
+        final String valHeader = "Basic " + new String(b64);
+        System.out.println("headers post: " + valHeader);
+        System.out.println("headers body: " + strPost);
 
+        try {
+            JSONArray jsonArray = new JSONArray(strPost);
+            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.POST, url, jsonArray, new Response.Listener<JSONArray>() {
+                @Override
+                public void onResponse(JSONArray response) {
+                    System.out.print("Response OK post: " + response);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    System.out.print("Response FAIL post: " + error);
+                }
+            }) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> mHeaders = new ArrayMap<String, String>();
+                    mHeaders.put("Content-Type", "application/json");
+                    mHeaders.put("Authorization", valHeader);
+                    return mHeaders;
+                }
+            };
+            queue.add(jsonArrayRequest);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -366,33 +402,6 @@ public class Menu extends Activity{
             }
         });
         return downloadDialog.show();
-    }
-
-    public void sendGetServer(View view) {
-
-    }
-
-    public void sendPostServer(View view) {
-        // Instantiate the RequestQueue.
-        /*RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://www.google.com";
-
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Toast.makeText(getBaseContext(), "POST: Response is: "+ response.substring(0,500), Toast.LENGTH_LONG).show();
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Toast.makeText(getBaseContext(), "POST: That didn't work!", Toast.LENGTH_LONG).show();
-            }
-        });
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);*/
     }
 
 }

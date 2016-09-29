@@ -1,46 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="10dp" >
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="scanQR"
-        android:text="@string/takeQR"
-  	  	android:textColor="#ffffff"
-    	android:background="@drawable/mybutton"
-    	android:layout_marginBottom="5dp" />
+		<android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:title="@string/app_name"
+            app:popupTheme="@style/AppTheme.PopupOverlay"
+            app:layout_scrollFlags="scroll|enterAlways">
+        </android.support.v7.widget.Toolbar>
 
-	<Button
-		android:id="@+id/button2"
+
+	<LinearLayout
+		android:orientation="vertical"
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:onClick="sendGetServer"
-		android:text="@string/sendGetServer"
-		android:textColor="#ffffff"
-		android:background="@drawable/mybutton"
-		android:layout_marginBottom="5dp" />
+		android:layout_height="match_parent"
+		android:gravity="top">
 
-	<Button
-		android:id="@+id/button3"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:onClick="sendPostServer"
-		android:text="@string/sendPostServer"
-		android:textColor="#ffffff"
-		android:background="@drawable/mybutton"
-		android:layout_marginBottom="5dp" />
+		<TextView
+			android:text="La Hermandad"
+			android:textSize="20dp"
+			android:textColor="@color/black"
+			android:textStyle="bold"
+			android:layout_gravity="center"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/textView2" />
 
-	<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:text="New Text"
-		android:id="@+id/textView"
-		android:layout_gravity="center_horizontal" />
+		<ImageView
+			android:layout_width="200dp"
+			android:layout_height="200dp"
+			android:layout_gravity="center"
+			app:srcCompat="@mipmap/ic_launcherlog"
+			android:id="@+id/imageView" />
 
-</LinearLayout>
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Aplicación para lectura de entradas"
+			android:id="@+id/textView"
+			android:layout_gravity="center_horizontal" />
+
+		<Button
+			android:id="@+id/button1"
+			android:layout_width="200dp"
+			android:layout_height="100dp"
+			android:layout_gravity="center|bottom"
+			android:onClick="scanQR"
+			android:layout_margin="150dp"
+			android:text="Leer Código QR"
+			android:textColor="#ffffff"
+			android:layout_marginBottom="5dp" />
+
+
+	</LinearLayout>
+
+
+
+</RelativeLayout>

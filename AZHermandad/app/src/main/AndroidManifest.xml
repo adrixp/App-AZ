@@ -28,7 +28,7 @@
         <activity
             android:name=".Menu"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme">
+            android:theme="@style/AppTheme.Dark.Menu">
         </activity>
     </application>
 
