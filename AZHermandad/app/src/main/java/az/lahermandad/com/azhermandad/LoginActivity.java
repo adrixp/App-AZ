@@ -20,8 +20,11 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,8 +42,10 @@ import butterknife.Bind;
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static String Error = "";
-    private static final int REQUEST_SIGNUP = 0;
-    private static String valHeader = "";
+
+    private static String url ="https://test-sell-ticket.herokuapp.com/user/login";
+    String path = Environment.getExternalStorageDirectory() + "/AZ_LaHermandad";
+
 
     @Bind(R.id.input_email) EditText _emailText;
     @Bind(R.id.input_password) EditText _passwordText;
@@ -53,7 +58,9 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        File folder = new File(Environment.getExternalStorageDirectory()	+ "/AZ_LaHermandad" );
+        Log.d(TAG, "path:   " + path);
+
+        File folder = new File(path);
         if(!folder.isDirectory()){
             if(folder.mkdir()){
                 Log.i(TAG, "Folder created successfully");
@@ -62,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
-        String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
+
         File file = new File(path, "tmp");
         //Read text from file
         String line = "empty";
@@ -115,34 +122,21 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_SIGNUP) {
-            if (resultCode == RESULT_OK) {
-
-                // TODO: Implement successful signup logic here
-                // By default we just finish the Activity and log them in automatically
-                this.finish();
-            }
-        }
-    }
-
     @Override
     public void onBackPressed() {
         // disable going back to the MainActivity
         moveTaskToBack(true);
     }
 
-    public void onLoginSuccess() {
+    public void onLoginSuccess(String token) {
         _loginButton.setEnabled(true);
         Intent mainIntent = new Intent(this,Menu.class);
-        mainIntent.putExtra("mmSeg",valHeader);
+        mainIntent.putExtra("token", token);
         startActivity(mainIntent);
         finish();
     }
 
-    //loPrimohtoLocoh
+
     public void makeRequest (String email, String pass){
 
         final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this,
@@ -151,19 +145,16 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage(getString(R.string.logAuth));
         progressDialog.show();
 
-        // Instantiate the RequestQueue.
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://az.tickets.lahermandad.es/api/user";
         String strTo64 = email + ":" + pass;
         byte[] b64 = Base64.encode(strTo64.getBytes(),Base64.DEFAULT);
-        valHeader = "Basic " + new String(b64);
-        System.out.println("Header: makeRequest: Login: " + valHeader);
 
-        ///////////////////////////////// LOgin Remember///////////////////////
+        loginRemember(b64);
+        sendPost(email,pass,progressDialog);
+    }
 
+    public void loginRemember(byte[] b64){
         if(_checkBoxn.isChecked()){
             try {
-                String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
                 File settings = new File(path, "tmp");
                 FileOutputStream fos2 = new FileOutputStream(settings);
 
@@ -171,71 +162,79 @@ public class LoginActivity extends AppCompatActivity {
                 fos2.close();
 
             } catch (java.io.IOException e) {
-                Log.e(TAG, "Exception in writeFile", e);
+                Log.d(TAG, "Exception in writeFile", e);
             }
         }else if(!_checkBoxn.isChecked()){
             try {
-                String path = Environment.getExternalStorageDirectory().getPath() + "/AZ_LaHermandad";
                 File settings = new File(path, "tmp");
                 FileOutputStream fos2 = new FileOutputStream(settings);
                 fos2.write("empty".getBytes());
                 fos2.close();
 
             } catch (java.io.IOException e) {
-                Log.e(TAG, "Exception in photoCallback", e);
+                Log.d(TAG, "Exception in photoCallback", e);
             }
         }
-        ///////////////////////////////// End LOgin Remember///////////////////////
+    }
+
+    //401 volver al login
+    //
 
 
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        //Toast.makeText(getBaseContext(), "GET: Response is: "+ response.substring(0,500), Toast.LENGTH_LONG).show();
-                        System.out.print("Response: " + response);
+    //5* no sabemos que pasa
+    //409 ya ha sido usado
 
-                        new android.os.Handler().postDelayed(
-                                new Runnable() {
-                                    public void run() {
-                                        // On complete call either onLoginSuccess or onLoginFailed
-                                        onLoginSuccess();
-                                        //onLoginFailed();
-                                        progressDialog.dismiss();
-                                    }
-                                }, 1000);
+    //2* OK
+
+    public void sendPost(String email, String pass, final ProgressDialog progressDialog) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        String strPost = "{  \n" +
+                "  \"email\":\"" + email + "\",\n" +
+                "  \"pass\": \"" + pass + "\"\n" +
+                "}";
+
+        try {
+            JSONObject jsonObj = new JSONObject(strPost);
+            JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObj, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    Log.d(TAG, "Response OK post: " + response);
+                    String token = "";
+                    try {
+                        token = response.getString("jwt");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                try{
-                    System.out.print("Error: " + error.networkResponse.statusCode);
-                }catch (Exception e){
-                    System.out.print("Error: " + error.getMessage());
-                }
 
-                Error = getString(R.string.logUsernotExist);
-                new android.os.Handler().postDelayed(
-                        new Runnable() {
-                            public void run() {
-                                onLoginFailed();
-                                progressDialog.dismiss();
-                            }
-                        }, 1000);
-            }
-        }){
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> mHeaders = new ArrayMap<String, String>();
-                mHeaders.put("Authorization", valHeader);
-                mHeaders.put("Content-Type", "text/plain; charset=utf-8");
-                return mHeaders;
-            }
-        };
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+                    final String finToken = token;
+                    Log.d(TAG, "token: " + token);
+
+                    new android.os.Handler().postDelayed( new Runnable() { public void run() {
+                        onLoginSuccess(finToken);
+                        progressDialog.dismiss(); } }, 1000);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(TAG, "Response FAIL post: " + error);
+                    new android.os.Handler().postDelayed( new Runnable() { public void run() {
+                        onLoginFailed();
+                        progressDialog.dismiss(); } }, 1000);
+
+                }
+            }) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> mHeaders = new ArrayMap<String, String>();
+                    mHeaders.put("Content-Type", "application/json");
+                    return mHeaders;
+                }
+            };
+            queue.add(jsonArrayRequest);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void onLoginFailed() {

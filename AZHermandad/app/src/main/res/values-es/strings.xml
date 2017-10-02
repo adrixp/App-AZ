@@ -12,4 +12,8 @@
     <string name="logInvEm">email inválido</string>
     <string name="logNoPass">contraseña vacía</string>
     <string name="rememberme">Recordar?</string>
+    <string name="simple_scanner_activity">QR Scanner</string>
+
+    <string name="QrLoadFail">Carga QR Activity falló</string>
+
 </resources>

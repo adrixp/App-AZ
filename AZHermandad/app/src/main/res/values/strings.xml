@@ -11,5 +11,7 @@
     <string name="logInvEm">Invalid email</string>
     <string name="logNoPass">Empty password</string>
     <string name="rememberme">Remember me?</string>
+    <string name="simple_scanner_activity">QR Scanner</string>
 
+    <string name="QrLoadFail">QR Load Activity failed</string>
 </resources>
