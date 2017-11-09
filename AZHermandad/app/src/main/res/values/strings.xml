@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AZ Hermandad</string>
+    <string name="app_name">PRO AZ Hermandad</string>
     <string name="takeQR">Read QR</string>
     <string name="sendGetServer">Send Get</string>
     <string name="sendPostServer">Send Post</string>
@@ -14,4 +14,8 @@
     <string name="simple_scanner_activity">QR Scanner</string>
 
     <string name="QrLoadFail">QR Load Activity failed</string>
+
+    <string name="title">La Hermandad</string>
+    <string name="subtitle">Scanning ticket App</string>
+    <string name="buttonText">Read QR Code</string>
 </resources>

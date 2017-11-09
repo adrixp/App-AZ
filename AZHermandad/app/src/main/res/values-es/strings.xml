@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AZ Hermandad</string>
+    <string name="app_name">PRO AZ Hermandad</string>
     <string name="takeQR">Leer QR</string>
     <string name="sendGetServer">Enviar Get</string>
     <string name="sendPostServer">Enviar Post</string>
@@ -15,5 +15,9 @@
     <string name="simple_scanner_activity">QR Scanner</string>
 
     <string name="QrLoadFail">Carga QR Activity falló</string>
+
+    <string name="title">La Hermandad</string>
+    <string name="subtitle">Aplicación para scaneo de entradas</string>
+    <string name="buttonText">Leer Código QR</string>
 
 </resources>

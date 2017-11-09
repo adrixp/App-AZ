@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -41,11 +42,14 @@ import butterknife.Bind;
  */
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
-    private static String Error = "";
+    private static String Error = "<Unexpected>";
 
-    private static String url ="https://test-sell-ticket.herokuapp.com/user/login";
+    //private final String url = "https://test-sell-ticket.herokuapp.com/user/";
+    private static String url ="https://sell-ticket.herokuapp.com/user/";
+
     String path = Environment.getExternalStorageDirectory() + "/AZ_LaHermandad";
-
+    String token = "";
+    boolean canReserve = false;
 
     @Bind(R.id.input_email) EditText _emailText;
     @Bind(R.id.input_password) EditText _passwordText;
@@ -68,7 +72,6 @@ public class LoginActivity extends AppCompatActivity {
                 Log.i(TAG, "Folder couldn't be created");
             }
         }
-
 
         File file = new File(path, "tmp");
         //Read text from file
@@ -119,7 +122,6 @@ public class LoginActivity extends AppCompatActivity {
 
         // TODO: Implement your own authentication logic here.
         makeRequest(email,password);
-
     }
 
     @Override
@@ -128,12 +130,12 @@ public class LoginActivity extends AppCompatActivity {
         moveTaskToBack(true);
     }
 
-    public void onLoginSuccess(String token) {
+    public void onLoginSuccess() {
         _loginButton.setEnabled(true);
         Intent mainIntent = new Intent(this,Menu.class);
         mainIntent.putExtra("token", token);
+        mainIntent.putExtra("canReserve", canReserve);
         startActivity(mainIntent);
-        finish();
     }
 
 
@@ -177,50 +179,114 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    //401 volver al login
-    //
-
-
-    //5* no sabemos que pasa
-    //409 ya ha sido usado
-
-    //2* OK
-
     public void sendPost(String email, String pass, final ProgressDialog progressDialog) {
-        RequestQueue queue = Volley.newRequestQueue(this);
+         final RequestQueue queue = Volley.newRequestQueue(this);
 
         String strPost = "{  \n" +
                 "  \"email\":\"" + email + "\",\n" +
                 "  \"pass\": \"" + pass + "\"\n" +
                 "}";
 
+        String strMe = "{}";
+
         try {
-            JSONObject jsonObj = new JSONObject(strPost);
-            JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObj, new Response.Listener<JSONObject>() {
+
+            JSONObject jsonObjMe = new JSONObject(strMe);
+            final JsonObjectRequest jsonArrayRequestMe = new JsonObjectRequest(Request.Method.GET, url + "me", jsonObjMe, new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
                     Log.d(TAG, "Response OK post: " + response);
-                    String token = "";
                     try {
-                        token = response.getString("jwt");
+                        String arr = response.getString("profiles");
+                        String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\s", "").split(",");
+
+                        for(String s:items){
+                            if (s.equals("\"CAN_RESERVE\"")){
+                                canReserve = true;
+                                break;
+                            }
+                        }
+
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
-                    final String finToken = token;
+
                     Log.d(TAG, "token: " + token);
 
                     new android.os.Handler().postDelayed( new Runnable() { public void run() {
-                        onLoginSuccess(finToken);
+                        onLoginSuccess();
                         progressDialog.dismiss(); } }, 1000);
                 }
             }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d(TAG, "Response FAIL post: " + error);
+                    NetworkResponse networkResponse = error.networkResponse;
+                    if(networkResponse != null){
+
+
+                        switch (networkResponse.statusCode){
+                            case 401:
+                                Error = "ME: Usuario o Pass Incorrecta";
+                                break;
+                            default:
+                                Error = "ME: Error devuelto: " + networkResponse.statusCode + "\n" + networkResponse.toString();
+                                break;
+                        }
+                    }
+
                     new android.os.Handler().postDelayed( new Runnable() { public void run() {
                         onLoginFailed();
                         progressDialog.dismiss(); } }, 1000);
+                }
+            }) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> mHeaders = new ArrayMap<String, String>();
+                    mHeaders.put("authorization", "Bearer " + token);
+                    return mHeaders;
+                }
+            };
+
+            JSONObject jsonObj = new JSONObject(strPost);
+            JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(Request.Method.POST, url + "login", jsonObj, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    Log.d(TAG, "Response OK post: " + response);
+                    try {
+                        token = response.getString("jwt");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "token: " + token);
+
+                    queue.add(jsonArrayRequestMe);
+
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(TAG, "Response FAIL post: " + error);
+
+                    NetworkResponse networkResponse = error.networkResponse;
+                    if(networkResponse != null){
+
+
+                        switch (networkResponse.statusCode){
+                            case 401:
+                                Error = "LOGIN: Usuario o Pass Incorrecta";
+                                break;
+                            default:
+                                Error = "LOGIN: Error devuelto: " + networkResponse.statusCode + "\n" + networkResponse.toString();
+                                break;
+                        }
+                    }
+
+                    new android.os.Handler().postDelayed( new Runnable() { public void run() {
+                        onLoginFailed();
+                        progressDialog.dismiss(); } }, 500);
 
                 }
             }) {
@@ -231,6 +297,7 @@ public class LoginActivity extends AppCompatActivity {
                     return mHeaders;
                 }
             };
+
             queue.add(jsonArrayRequest);
         } catch (JSONException e) {
             e.printStackTrace();

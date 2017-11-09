@@ -10,10 +10,10 @@ import android.view.View;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
-import android.net.Uri;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -31,8 +31,10 @@ public class Menu extends AppCompatActivity {
 	static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
     private static final String TAG = "Menu";
 
-    private final String url = "http://az.tickets.lahermandad.es/api/sell";
+    //private final String url = "https://test-sell-ticket.herokuapp.com/ticket/";
+    private final String url = "https://sell-ticket.herokuapp.com/ticket/";
     String token = "";
+    boolean canReserve = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +43,10 @@ public class Menu extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         token = extras.getString("token");
+        canReserve = extras.getBoolean("canReserve");
 
         Log.d(TAG, "token: " + token);
+        Log.d(TAG, "canReserve: " + canReserve);
 	}
 
 
@@ -61,69 +65,115 @@ public class Menu extends AppCompatActivity {
             Log.v(TAG, "LLega al 0");
 			if (resultCode == Activity.RESULT_OK) {
 				String qrText = intent.getStringExtra("SCAN_RESULT");
-
-                showDialogResult(Menu.this, true , "QR Result" , qrText, "Ok").show();
+                String reserved = "";
+                String id = "";
+                String email = "";
+                String name = "";
+                String dni = "";
+                String date = "";
+                boolean inmortal = false;
                 Log.v(TAG, qrText);
-			}
+
+                try {
+                    JSONObject jsonObj = new JSONObject(qrText);
+                    reserved = jsonObj.getString("reserved");
+                    id = jsonObj.getString("_id");
+                    email = jsonObj.getString("email");
+                    name = jsonObj.getString("name");
+                    dni = jsonObj.getString("dni");
+                    date = jsonObj.getString("dateOfPursache");
+
+                    inmortal = jsonObj.getBoolean("immortal");
+
+                    if(canReserve = false && reserved.equals("true")){
+                        showDialogResult(Menu.this, false , "QR Result" , "Es una entrada reservada.\nNo tienes permisos para validarla\nDirige al participante a RESERVAS", "Ok").show();
+                    }else if(canReserve = true && reserved.equals("true")){
+                        sendPatch(qrText,id,email,dni,name,date,true,inmortal);
+                    }else{
+                        sendPatch(qrText,id,email,dni,name,date,false,inmortal);
+                    }
+
+                }catch (JSONException e){
+                    e.printStackTrace();
+                    showDialogResult(Menu.this, false , "Invalid QR" , "Código QR Inválido", "Ok").show();
+                }catch (Exception e){
+                    e.printStackTrace();
+                    showDialogResult(Menu.this, false , "QR Result" , "Problema desconocido\nVer log", "Ok").show();
+                }
+            }
 		}
 	}
 
-    public void showStateEntrada (String entradaUser, String entradaName, String entradaMail, int stateEntrada, String numEntrada){
-        String entradaRestult;
-        switch (stateEntrada){
-            case 0:
-                entradaRestult = "Entrada Borrada";
-                break;
-            case 1:
-                entradaRestult = "Entrada OK";
-                break;
-            case 2:
-                entradaRestult = "Entrada Repetida";
-                break;
-            case 3:
-                entradaRestult = "Entrada Invalida";
-                break;
-            case 4:
-                entradaRestult = "Entrada No Encontrada";
-                break;
-            default:
-                entradaRestult = "Error Desconocido";
-                break;
-        }
-        String body =  "*Vendedor:\n" + entradaUser + "\n*Participante:\n" + entradaName
-                + "\n*Mail:\n" + entradaMail + "\n*Número: " +numEntrada;
 
-        if(stateEntrada == 1){
-            showDialogResult(Menu.this, true , entradaRestult , body, "Ok").show();
-        }else{
-            showDialogResult(Menu.this, false ,entradaRestult, body, "Ok").show();
-        }
-
-    }
-
-    public void sendPost(String strPost) {
+    public void sendPatch(final String strPost, final String id, final String email, final String dni, final String name, final String date, final boolean isReserved, boolean isInmortal) {
         RequestQueue queue = Volley.newRequestQueue(this);
+        String nofInmo = "";
+        if(isInmortal){
+            nofInmo = "Es Inmortal\n";
+        }
 
-        final String valHeader = token;
+        final String isInmortals = nofInmo;
 
         try {
-            JSONObject jsonobj = new JSONObject(strPost);
-            JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(Request.Method.POST, url, jsonobj, new Response.Listener<JSONObject>() {
+            JSONObject jsonObj = new JSONObject(strPost);
+            JsonObjectRequest jsonArrayRequest = new JsonObjectRequest(Request.Method.PATCH, url + id + "/used", jsonObj, new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
-                    System.out.print("Response OK post: " + response);
+                    Log.v(TAG, "Response OK PATCH: " + response);
                 }
             }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    System.out.print("Response FAIL post: " + error);
+                    Log.v(TAG, "Response FAIL PATCH: " + error);
+                    NetworkResponse networkResponse = error.networkResponse;
+                    if(networkResponse != null){
+                        Log.v(TAG, "ERROR CODEPATCH: " + networkResponse.statusCode);
+
+                        switch (networkResponse.statusCode){
+                            case 401:
+                                finish();
+                                break;
+                            case 403:
+                                showDialogResult(Menu.this, false , "QR Result" , "Es una entrada reservada.\nNo tienes permisos para validarla\nDirige al participante a RESERVAS", "Ok").show();
+                                break;
+                            case 409:
+                                showDialogResult(Menu.this, false , "Entrada Repetida" , "Esta entrada ya ha sido validada \nPor favor que el participante vaya a RESERVAS\nDorsal: "
+                                         + id + "\n" + "DNI: " + dni + "\nNombre: " + name
+                                        , "Ok").show();
+                                break;
+                            default:
+                                showDialogResult(Menu.this, false , "Error " + networkResponse.statusCode, "Error interno del servidor\n" + strPost, "Ok").show();
+                                break;
+                        }
+                    } else{
+                        Log.v(TAG, "Response VACIA PATCH: ");
+
+                        if(isReserved){
+                            showDialogResult(Menu.this, true , "Entrada Reservada\nFalta cobrar entrada", "Dorsal: " + id + "\n" + isInmortals
+                                            + "Nombre: " + name + "\n" +
+                                            "Email: " + email + "\n" +
+                                            "DNI: " + dni + "\n" +
+                                            "FechaCompra: " + date.split("T")[0] + "\n" +
+                                            "HoraCompra: " + date.split("T")[1].split("\\.")[0]
+                                    , "Ok").show();
+                        }else{
+                            showDialogResult(Menu.this, true , "Entrada Correcta\nDorsal: " + id, isInmortals + "Nombre: " + name + "\n" +
+                                            "Email: " + email + "\n" +
+                                            "DNI: " + dni + "\n" +
+                                            "FechaCompra: " + date.split("T")[0] + "\n" +
+                                            "HoraCompra: " + date.split("T")[1].split("\\.")[0]
+                                    , "Ok").show();
+                        }
+
+                    }
+
                 }
             }) {
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
                     Map<String, String> mHeaders = new ArrayMap<String, String>();
+                    mHeaders.put("authorization", "Bearer " + token);
                     mHeaders.put("Content-Type", "application/json");
-                    mHeaders.put("Authorization", valHeader);
                     return mHeaders;
                 }
             };
@@ -133,7 +183,7 @@ public class Menu extends AppCompatActivity {
         }
     }
 
-    private static AlertDialog showDialogResult(final Activity act, boolean isOk, CharSequence title, CharSequence message, CharSequence buttonYes) {
+    private AlertDialog showDialogResult(final Activity act, boolean isOk, CharSequence title, CharSequence message, CharSequence buttonYes) {
         AlertDialog.Builder downloadDialog = new AlertDialog.Builder(act);
         downloadDialog.setTitle(title);
         downloadDialog.setMessage(message);
@@ -143,8 +193,14 @@ public class Menu extends AppCompatActivity {
             downloadDialog.setIcon(R.mipmap.ic_redcross);
         }
         downloadDialog.setPositiveButton(buttonYes, new DialogInterface.OnClickListener() {
+            @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-
+            }
+        });
+        downloadDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                scanQR(null);
             }
         });
         return downloadDialog.show();

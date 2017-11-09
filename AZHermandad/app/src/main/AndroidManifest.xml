@@ -29,7 +29,7 @@
         <activity
             android:name=".Menu"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.Dark.Menu">
+            android:theme="@style/AppTheme.Dark">
         </activity>
         <activity android:name=".SimpleScannerActivity"
             android:theme="@style/AppOverlayTheme"
